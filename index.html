@@ -125,11 +125,11 @@
             return tipp;
         }).addTo(map);
 		
-	var MarktWien = L.geoJSON(window.Markt_Wien, {
+	//var MarktWien = L.geoJSON(window.Markt_Wien, {
 
-        }).bindPopup(function(layer) {
-            return layer.feature.properties.INFOS_NACHHALTIG;
-        }).addTo(map);
+       // }).bindPopup(function(layer) {
+          //  return layer.feature.properties.INFOS_NACHHALTIG;
+        //}).addTo(map);
 
         // WMTS-Layer Auswahl und Marker Auswahl Overlay hinzufügen
         L.control.layers({
@@ -143,7 +143,7 @@
             "Standorte": punkte,
             "Standorte Citybike": citybikePunkte,
             "Wanderwege": wanderwegePunkte
-			"Markt": MarktWien
+	    //"Markt": MarktWien
         }).addTo(map)
     </script>
 
