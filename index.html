@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Stadtspaziergang Wien</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="stadtspaziergang_punkte.geojson.js">    </script>
+    <script src="CITYBIKEOGD.js">    </script>
+    <script src="wanderwege_punkte.js"></script>
+	
+
+    <style>
+        h1 {
+            text-align: center;
+        }
+
+        #wienMap {
+            width: 900px;
+            height: 600px;
+            border: 1px solid black;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Wien- Einkaufen, Wandern, Radeln
+    </h1>
+
+    <div id="wienMap"></div>
+
+    <script>
+        // WMTS-Layer definieren - Quelle: http://www.basemap.at/wmts/1.0.0/WMTSCapabilities.xml
+        var layers = {
+            geolandbasemap: L.tileLayer("https://{s}.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png", {
+                subdomains: ['maps', 'maps1', 'maps2', 'maps3', 'maps4'],
+                attribution: 'Datenquelle: <a href="http://www.basemap.at/">basemap.at</a>'
+            }),
+            bmapgrau: L.tileLayer("https://{s}.wien.gv.at/basemap/bmapgrau/normal/google3857/{z}/{y}/{x}.png", {
+                subdomains: ['maps', 'maps1', 'maps2', 'maps3', 'maps4'],
+                attribution: 'Datenquelle: <a href="http://www.basemap.at/">basemap.at</a>'
+            }),
+            bmapoverlay: L.tileLayer("https://{s}.wien.gv.at/basemap/bmapoverlay/normal/google3857/{z}/{y}/{x}.png", {
+                subdomains: ['maps', 'maps1', 'maps2', 'maps3', 'maps4'],
+                attribution: 'Datenquelle: <a href="http://www.basemap.at/">basemap.at</a>'
+            }),
+            bmaphidpi: L.tileLayer("https://{s}.wien.gv.at/basemap/bmaphidpi/normal/google3857/{z}/{y}/{x}.jpeg", {
+                subdomains: ['maps', 'maps1', 'maps2', 'maps3', 'maps4'],
+                attribution: 'Datenquelle: <a href="http://www.basemap.at/">basemap.at</a>'
+            }),
+            bmaporthofoto30cm: L.tileLayer("https://{s}.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg", {
+                subdomains: ['maps', 'maps1', 'maps2', 'maps3', 'maps4'],
+                attribution: 'Datenquelle: <a href="http://www.basemap.at/">basemap.at</a>'
+            }),
+            osm: L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                subdomains: ['a', 'b', 'c'],
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            })
+        };
+
+        // Karte definieren und Ausschnitt setzen
+        var map = L.map('wienMap', {
+            layers: [layers.bmapgrau],
+            center: [48.208174, 16.373819],
+            zoom: 12
+        });
+
+        // Maßstab hinzufügen
+        L.control.scale({
+            maxWidth: 200,
+            metric: true,
+            imperial: false
+        }).addTo(map);
+
+        var iconByCategory = {
+            1: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+            2: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+            3: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+            4: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
+            5: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png",
+            6: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png"
+        };
+        var punkte = L.geoJSON(window.spaziergangPunkte, {
+            pointToLayer: function(feature, latlng) {
+                return L.marker(latlng, {
+                    icon: L.icon({
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41],
+                        shadowUrl: 'https://unpkg.com/leaflet@1.0.3/dist/images/marker-shadow.png',
+                        iconUrl: iconByCategory[feature.properties.KATEGORIE]
+                    })
+                });
+            }
+        }).bindPopup(function(layer) {
+            return layer.feature.properties.NAME;
+        }).addTo(map);
+
+
+        var citybikePunkte = L.geoJSON(window.citybikePunkte, {
+
+        }).bindPopup(function(layer) {
+            return layer.feature.properties.STATION;
+        }).addTo(map);
+
+        var wanderwegePunkte = L.geoJSON(window.wanderwegePunkte, {
+            style: function(feature) {
+                var farbe = "";
+                if (feature.properties.TYP == "2") {
+                    farbe = "red"
+                } else {
+                    farbe = "blue"
+                }
+                return {
+                    color: farbe
+                }
+            }
+        }).bindPopup(function(layer) {
+            var tipp = '<h3>' + layer.feature.properties.BEZ_TEXT + '</h3>';
+            tipp += '<a href="' + layer.feature.properties.URL_INFO + '">Infos</a>';
+            return tipp;
+        }).addTo(map);
+		
+		 // var MarktWien = L.geoJSON(window.Markt_Wien, {
+
+        //}).bindPopup(function(layer) {
+            //return layer.feature.properties.MARKTKATEGORIE;
+        //}).addTo(map);
+
+        // WMTS-Layer Auswahl und Marker Auswahl Overlay hinzufügen
+        L.control.layers({
+            "basemap.at - STANDARD": layers.geolandbasemap,
+            "basemap.at - GRAU": layers.bmapgrau,
+            "basemap.at - OVERLAY": layers.bmapoverlay,
+            "basemap.at - HIGH-DPI": layers.bmaphidpi,
+            "basemap.at - ORTHOFOTO": layers.bmaporthofoto30cm,
+            "OpenStreetMap": layers.osm
+        },{
+            "Standorte": punkte,
+            "Standorte Citybike": citybikePunkte,
+            "Wanderwege": wanderwegePunkte
+			"Markt": MarktWien
+        }).addTo(map)
+    </script>
+
+</body>
+
+</html>
